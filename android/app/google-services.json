@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "1032740394300",
+    "project_id": "ride-7d2c5",
+    "storage_bucket": "ride-7d2c5.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1032740394300:android:d2750f1e3737a878a8fa39",
+        "android_client_info": {
+          "package_name": "com.rides"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1032740394300-is1js09b2vp3gn25qke3nu1tdvbv6bvu.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.rides",
+            "certificate_hash": "d48cc0bc173b556e6c9ee2338a7805953ec6158e"
+          }
+        },
+        {
+          "client_id": "1032740394300-0n2b23phkvc9p8p6vsl8rncv53h9th9k.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBTKpMiH0tJhgTzhg-of5tEe2ToJkhP50o"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1032740394300-0n2b23phkvc9p8p6vsl8rncv53h9th9k.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
