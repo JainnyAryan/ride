@@ -16,7 +16,7 @@ class _AuthFormState extends State<AuthForm> {
   String _userInput = '';
   String buttonText = "GET OTP";
   String textInputText = "Mobile Number";
-  var _controller = TextEditingController();
+  final _controller = TextEditingController();
   @override
   void trySubmit() {
     final isValid = _formKey.currentState!.validate();
@@ -24,6 +24,7 @@ class _AuthFormState extends State<AuthForm> {
     if (isValid) {
       _formKey.currentState!.save();
       _controller.clear();
+      FocusScope.of(context).unfocus();
       if (!widget.isOTP) {
         widget.submitFunc(_userInput);
         widget.isOTP = true;

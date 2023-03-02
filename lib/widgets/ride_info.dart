@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/src/widgets/framework.dart';
 import 'package:flutter/src/widgets/placeholder.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:provider/provider.dart';
 
-import '../helpers/location_helper.dart';
+import '../providers/location_helper.dart';
 
 class RideInfo extends StatefulWidget {
   final LatLng startLocation;
@@ -17,12 +18,12 @@ class RideInfo extends StatefulWidget {
 
 class _RideInfoState extends State<RideInfo> {
   Future<Map<String, dynamic>> getAdresses(LatLng start, LatLng end) async {
-    String startAddress = await LocationHelper.getPlaceAddress(
+    String startAddress = await Provider.of<LocationProvider>(context, listen: false).getPlaceAddress(
         widget.startLocation.latitude, widget.startLocation.longitude);
-    String destAddress = await LocationHelper.getPlaceAddress(
+    String destAddress = await Provider.of<LocationProvider>(context, listen: false).getPlaceAddress(
         widget.destLocation.latitude, widget.destLocation.longitude);
-    String totalTime = LocationHelper.totalTime;
-    String totalDist = LocationHelper.totalDist;
+    String totalTime = Provider.of<LocationProvider>(context, listen: false).totalTime;
+    String totalDist = Provider.of<LocationProvider>(context, listen: false).totalDist;
     return {
       'startAddress': startAddress,
       'destAddress': destAddress,
