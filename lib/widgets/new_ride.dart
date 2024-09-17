@@ -3,6 +3,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:ride/providers/location_helper.dart';
 import 'package:ride/screens/ride_screen.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 
 class NewRide extends StatefulWidget {
   final LatLng presentLocation;
@@ -18,60 +19,60 @@ class _NewRideState extends State<NewRide> {
 
   @override
   Widget build(BuildContext context) {
-    final address = Provider.of<LocationProvider>(context, listen: false).getPlaceAddress(
-        widget.selectedLoc.latitude, widget.selectedLoc.longitude);
+    final address = Provider.of<LocationProvider>(context, listen: false)
+        .getPlaceAddress(
+            widget.selectedLoc.latitude, widget.selectedLoc.longitude);
     return Container(
         padding: const EdgeInsets.all(10),
         height: MediaQuery.of(context).size.height * 0.3,
         child: Card(
           child: FutureBuilder(
             future: address,
-            builder: (ctx, snapshot) => snapshot.connectionState ==
-                    ConnectionState.waiting
-                ? const Center(child: CircularProgressIndicator())
-                : Padding(
-                    padding: const EdgeInsets.all(10.0),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+            builder: (ctx, snapshot) => Skeletonizer(
+              enabled: snapshot.connectionState == ConnectionState.waiting,
+              child: Padding(
+                padding: const EdgeInsets.all(10.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Column(mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              snapshot.data!,
-                              style: TextStyle(
-                                  fontSize: MediaQuery.of(context).size.height *
-                                      0.022),
-                              textAlign: TextAlign.center,
-                            ),
-                            TextButton.icon(
-                              onPressed: () async {
-                                var pickedTime = await showTimePicker(
-                                    context: context,
-                                    initialTime: TimeOfDay.now());
-                                setState(() {
-                                  pickedTimeString =
-                                      pickedTime!.format(context);
-                                });
-                              },
-                              icon: const Icon(Icons.access_time),
-                              label: Text(pickedTimeString),
-                            ),
-                          ],
+                        Text(
+                          snapshot.data!,
+                          style: TextStyle(
+                              fontSize:
+                                  MediaQuery.of(context).size.height * 0.022),
+                          textAlign: TextAlign.center,
                         ),
-                        ElevatedButton.icon(
-                          onPressed: () {
-                            Navigator.of(context)
-                                .pushNamed(RideScreen.routeName, arguments: {
+                        TextButton.icon(
+                          onPressed: () async {
+                            var pickedTime = await showTimePicker(
+                                context: context, initialTime: TimeOfDay.now());
+                            setState(() {
+                              pickedTimeString = pickedTime!.format(context);
+                            });
+                          },
+                          icon: const Icon(Icons.access_time),
+                          label: Text(pickedTimeString),
+                        ),
+                      ],
+                    ),
+                    ElevatedButton.icon(
+                      onPressed: () {
+                        Navigator.of(context).pushNamed(RideScreen.routeName,
+                            arguments: {
                               'startLoc': widget.presentLocation,
                               'endLoc': widget.selectedLoc
                             });
-                          },
-                          icon: const Icon(Icons.time_to_leave),
-                          label: const Text("Book Ride"),
-                        )
-                      ],
-                    ),
-                  ),
+                      },
+                      icon: const Icon(Icons.time_to_leave),
+                      label: const Text("Book Ride"),
+                    )
+                  ],
+                ),
+              ),
+            ),
           ),
         ));
   }

@@ -11,18 +11,39 @@ import 'package:ride/providers/auth.dart';
 class LocationProvider with ChangeNotifier {
   String totalTime = '';
   String totalDist = '';
-  final _loc = Location();
+  final _locObj = Location();
+  final LatLng _vitLocation = const LatLng(12.970950, 79.158711);
+  LatLng _currentLocation = const LatLng(12.970950, 79.158711);
 
-  Location get loc {
-    return _loc;
+  bool _currentLocationLoadedStatus = false;
+  bool _shuttleLocationsLoadedStatus = false;
+
+  Location get locObj {
+    return _locObj;
+  }
+
+  LatLng get currentLocation {
+    return _currentLocation;
+  }
+
+  bool get currentLocationLoadedStatus {
+    return _currentLocationLoadedStatus;
+  }
+
+  bool get shuttleLocationsLoadedStatus {
+    return _shuttleLocationsLoadedStatus;
+  }
+
+  LatLng get vitLocation {
+    return _vitLocation;
   }
 
   Future<LatLng> getCurrentUserLocation() async {
-    final locData = await _loc.getLocation();
+    final locData = await _locObj.getLocation();
     final latlng =
         LatLng(locData.latitude as double, locData.longitude as double);
     notifyListeners();
-    return Future.value(latlng);
+    return latlng;
   }
 
   Future<String> getPlaceAddress(double lat, double lng) async {
@@ -38,5 +59,22 @@ class LocationProvider with ChangeNotifier {
 
   void setDirectionTime(String time) {
     totalTime = time;
+  }
+
+  void setCurrentLocation(LocationData currentLocationData) {
+    _currentLocation = LatLng(
+      currentLocationData.latitude ?? _vitLocation.latitude,
+      currentLocationData.longitude ?? _vitLocation.longitude,
+    );
+  }
+
+  void setCurrentLocationLoadedStatus(bool status) {
+    _currentLocationLoadedStatus = status;
+    notifyListeners();
+  }
+
+  void setShuttleLocationsLoadedStatus(bool status) {
+    _shuttleLocationsLoadedStatus = status;
+    notifyListeners();
   }
 }

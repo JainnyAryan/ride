@@ -13,8 +13,8 @@ class AuthProvider with ChangeNotifier {
   bool _isNewUser = false;
   bool _isCab = false;
 
-  bool get isNewUser {
-    return _isNewUser;
+  String get userPhone {
+    return _mobileNumber;
   }
 
   String get userName {
@@ -23,6 +23,10 @@ class AuthProvider with ChangeNotifier {
 
   String get userEmail {
     return _email;
+  }
+
+  bool get isNewUser {
+    return _isNewUser;
   }
 
   bool get isCab {
@@ -86,8 +90,17 @@ class AuthProvider with ChangeNotifier {
       'email': email,
       'isCab': isCab,
     });
-
-    print("userinfo : " + isCab.toString());
+    GetStorage().write(
+      "loggedInUser",
+      {
+        "uid": _authResult!.user!.uid,
+        'name': name,
+        'email': email,
+        'isCab': isCab,
+        "mobileNumber": _mobileNumber
+      },
+    );
+    print("userinfo : $isCab");
 
     if (isCab) {
       await FirebaseFirestore.instance
@@ -109,15 +122,29 @@ class AuthProvider with ChangeNotifier {
     // print(_authResult!.user!.uid);
     // final box = GetStorage();
     final data = FirebaseAuth.instance.currentUser!.uid;
-    print("data : " + data);
+    print("data : $data");
     var response =
         await FirebaseFirestore.instance.collection('users').doc(data).get();
     print("object hua");
     var responseData = response.data();
-    print("data " + responseData.toString());
+    print("data $responseData");
     _name = responseData!['name'];
     _email = responseData['email'];
+    _mobileNumber = responseData['mobile-number'];
     _isCab = responseData['isCab'];
-    // notifyListeners();
+  }
+
+  String getAbbreviatedName() {
+    List<String> parts = _name.split(" ");
+    if (parts.length == 1) {
+      return _name;
+    }
+    String abbrName = "";
+    for (int i = 0; i < parts.length - 1; i++) {
+      abbrName += parts[i][0].toUpperCase();
+      abbrName += ". ";
+    }
+    abbrName += parts.last;
+    return abbrName;
   }
 }

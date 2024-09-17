@@ -8,60 +8,69 @@ import 'package:location/location.dart';
 import 'package:provider/provider.dart';
 import 'package:ride/providers/location_helper.dart';
 import 'package:ride/providers/auth.dart';
-import 'package:ride/screens/map_screen.dart';
+import 'package:ride/widgets/custom_app_bar.dart';
+import 'package:ride/widgets/map_widget.dart';
 import 'package:ride/widgets/new_ride.dart';
+import 'package:ride/widgets/side_drawer.dart';
 
-class HomeScreen extends StatefulWidget {
+class HomeScreen extends StatelessWidget {
   static const routeName = '/home';
-
   HomeScreen({super.key});
 
-  @override
-  State<HomeScreen> createState() => _HomeScreenState();
-}
-
-class _HomeScreenState extends State<HomeScreen> {
+  final GlobalKey<ScaffoldState> _key = GlobalKey();
   var selectedLocation;
+  String appBarText = "";
+
+  void openControlPanel(BuildContext context) {
+    showModalBottomSheet(
+      showDragHandle: true,
+      context: context,
+      builder: (context) => Container(),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
+    bool isCab = Provider.of<AuthProvider>(context, listen: false).isCab;
     return Scaffold(
-      appBar: AppBar(
-        title: Text(Provider.of<AuthProvider>(context).userName),
-        centerTitle: true,
-        leading: Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: CircleAvatar(
-            backgroundColor: Colors.white,
-            child: Icon(
-              Provider.of<AuthProvider>(context, listen: false).isCab
-                  ? Icons.local_taxi
-                  : Icons.person,
-              color: Colors.grey,
-            ),
+      key: _key,
+      drawer: SideDrawer(),
+      extendBodyBehindAppBar: true,
+      body: Stack(
+        children: [
+          MapWidget(),
+          CustomAppBar(
+            onTapMenuButton: () {
+              _key.currentState!.openDrawer();
+            },
+            titleText: appBarText,
           ),
-        ),
-        actions: [
-          IconButton(
-              tooltip: "Sign Out",
-              onPressed: () async {
-                await FirebaseAuth.instance.signOut();
-                // Provider.of<AuthProvider>(context, listen: false).dispose();
-              },
-              icon: const Icon(Icons.exit_to_app))
         ],
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
       ),
-      body: FutureBuilder(
-        future: Provider.of<LocationProvider>(context, listen: false)
-            .getCurrentUserLocation(),
-        builder: (context, snapshot) =>
-            snapshot.connectionState == ConnectionState.waiting
-                ? const CircularProgressIndicator()
-                : MapScreen(snapshot),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () {
+          showModalBottomSheet(
+            context: context,
+            backgroundColor: Colors.transparent,
+            builder: (context) {
+              return Container(
+                margin: const EdgeInsets.fromLTRB(8, 0, 8, 8),
+                child: Card(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Container(
+                    height: 80,
+                  ),
+                ),
+              );
+            },
+          );
+        },
+        label: Text("Control"),
+        icon: Icon(Icons.pan_tool_alt),
       ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
   }
 }
