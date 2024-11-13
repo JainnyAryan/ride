@@ -2,23 +2,22 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:location/location.dart';
+import 'package:location/location.dart' as location;
 import 'package:http/http.dart' as http;
-import 'package:provider/provider.dart';
-import 'package:ride/helpers/API_KEY.dart';
-import 'package:ride/providers/auth.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:ride/helpers/const_values.dart';
 
 class LocationProvider with ChangeNotifier {
   String totalTime = '';
   String totalDist = '';
-  final _locObj = Location();
+  final _locObj = location.Location();
   final LatLng _vitLocation = const LatLng(12.970950, 79.158711);
   LatLng _currentLocation = const LatLng(12.970950, 79.158711);
 
   bool _currentLocationLoadedStatus = false;
   bool _shuttleLocationsLoadedStatus = false;
 
-  Location get locObj {
+  location.Location get locObj {
     return _locObj;
   }
 
@@ -38,7 +37,17 @@ class LocationProvider with ChangeNotifier {
     return _vitLocation;
   }
 
-  Future<LatLng> getCurrentUserLocation() async {
+  Future<PermissionStatus> getLocationPermissionStatus(bool isDriver) async {
+    final locationPermission = await Permission.location.status;
+    final locationAlwaysPermission = await Permission.locationAlways.status;
+    if (isDriver) {
+      return locationAlwaysPermission;
+    } else {
+      return locationPermission;
+    }
+  }
+
+  Future<LatLng> getCurrentLocation() async {
     final locData = await _locObj.getLocation();
     final latlng =
         LatLng(locData.latitude as double, locData.longitude as double);
@@ -48,7 +57,7 @@ class LocationProvider with ChangeNotifier {
 
   Future<String> getPlaceAddress(double lat, double lng) async {
     final url = Uri.parse(
-        "https://maps.googleapis.com/maps/api/geocode/json?latlng=$lat,$lng&key=${MAPS_API_KEY.value}");
+        "https://maps.googleapis.com/maps/api/geocode/json?latlng=$lat,$lng&key=${ConstValues.MAPS_API_KEY}");
     final response = await http.get(url);
     return json.decode(response.body)['results'][0]['formatted_address'];
   }
@@ -61,7 +70,7 @@ class LocationProvider with ChangeNotifier {
     totalTime = time;
   }
 
-  void setCurrentLocation(LocationData currentLocationData) {
+  void setCurrentLocation(location.LocationData currentLocationData) {
     _currentLocation = LatLng(
       currentLocationData.latitude ?? _vitLocation.latitude,
       currentLocationData.longitude ?? _vitLocation.longitude,

@@ -2,16 +2,19 @@ import 'dart:async';
 import 'dart:developer';
 import 'dart:typed_data';
 
+import 'package:animated_flip_counter/animated_flip_counter.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:location/location.dart';
 import 'package:provider/provider.dart';
-import 'package:ride/providers/auth.dart';
+import 'package:ride/providers/server_interaction_provider.dart';
+import 'package:ride/providers/authentication_provider.dart';
 import 'package:ride/providers/driver_shuttle_provider.dart';
-import 'package:ride/providers/location_helper.dart';
+import 'package:ride/providers/location_provider.dart';
+import 'package:ride/widgets/driver_control_panel.dart';
+import 'package:ride/widgets/online_shuttles_view.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
 class MapWidget extends StatefulWidget {
@@ -25,15 +28,17 @@ class _MapWidgetState extends State<MapWidget> {
   bool locationsSet = false;
   late LocationProvider _locationProvider;
   late DriverShuttleProvider _cabDriverProvider;
-  late AuthProvider _authProvider;
+  late AuthenticationProvider _authenticationProvider;
   var selectedLocation;
   var imgBytes;
   GoogleMapController? _mapController;
+  final Completer<GoogleMapController> _controller = Completer();
   StreamSubscription? locStream;
+  int shuttleCount = 0;
 
   Future<void> setFirstTimeCabLocation(LatLng latlng) async {
     final uid = FirebaseAuth.instance.currentUser!.uid;
-    await FirebaseFirestore.instance.collection("cabs").doc(uid).set({
+    await FirebaseFirestore.instance.collection("shuttles").doc(uid).update({
       'lat': latlng.latitude,
       'lng': latlng.longitude,
     });
@@ -47,15 +52,22 @@ class _MapWidgetState extends State<MapWidget> {
     if (locStream != null) {
       locStream!.cancel();
     }
-    _authProvider = Provider.of<AuthProvider>(context, listen: false);
+    _authenticationProvider =
+        Provider.of<AuthenticationProvider>(context, listen: false);
     _locationProvider = Provider.of<LocationProvider>(context, listen: false);
-    _cabDriverProvider = Provider.of<DriverShuttleProvider>(context, listen: false);
+    _cabDriverProvider =
+        Provider.of<DriverShuttleProvider>(context, listen: false);
+    bool isDriver = _authenticationProvider.isDriver;
+    if (isDriver) {
+      Provider.of<ServerInteractionProvider>(context, listen: false)
+          .initFaceRecognitionServerBond(context);
+    }
     if (FirebaseAuth.instance.currentUser != null) {
-      final locInstance = _locationProvider.locObj;
-      locStream = locInstance.onLocationChanged.listen((locationEvent) {
+      locStream =
+          _locationProvider.locObj.onLocationChanged.listen((locationEvent) {
         _locationProvider.setCurrentLocation(locationEvent);
-        if (_authProvider.isCab) {
-          _cabDriverProvider.updateCabDriverPresentLocation(locationEvent);
+        if (_authenticationProvider.isDriver) {
+          _cabDriverProvider.updateDriverLocOnServer(locationEvent);
         }
       }, cancelOnError: true);
     }
@@ -84,96 +96,94 @@ class _MapWidgetState extends State<MapWidget> {
 
   @override
   Widget build(BuildContext context) {
-    var isCab = _authProvider.isCab;
-
+    var isDriver = _authenticationProvider.isDriver;
     return StreamBuilder(
-      stream: FirebaseFirestore.instance.collection('cabs').snapshots(),
-      builder: (ctx, snapshot) => snapshot.connectionState ==
-                  ConnectionState.waiting &&
-              _mapController == null
-          ? Skeletonizer(
-              enabled: true,
-              child: Center(
-                child: ListView(
-                  children: [
-                    const Text(""),
-                    const Text(""),
-                    const Text(""),
-                    const Text(""),
-                    const Text(""),
-                  ],
+      stream: !_authenticationProvider.isDriver
+          ? FirebaseFirestore.instance.collection('shuttles').snapshots()
+          : null,
+      builder: (ctx, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting &&
+            _mapController == null) {
+          return Skeletonizer(
+            enabled: true,
+            child: Center(
+              child: ListView(
+                children: const [
+                  Text(""),
+                  Text(""),
+                  Text(""),
+                  Text(""),
+                  Text(""),
+                ],
+              ),
+            ),
+          );
+        } else {
+          if (!isDriver) {
+            _cabDriverProvider.updateShuttlesList(snapshot.data!.docChanges);
+            shuttleCount = _cabDriverProvider.shuttles
+                .where((shuttle) => shuttle.driver != null)
+                .length;
+          }
+          return Stack(
+            children: [
+              GoogleMap(
+                onMapCreated: (controller) async {
+                  log("Map built again");
+                  _controller.complete(controller);
+                  _mapController = controller;
+                  _locationProvider
+                      .getCurrentLocation()
+                      .then((currentLocation) {
+                    _mapController!
+                        .animateCamera(CameraUpdate.newCameraPosition(
+                      CameraPosition(
+                        bearing: 0,
+                        target: LatLng(
+                          currentLocation.latitude,
+                          currentLocation.longitude,
+                        ),
+                        zoom: 17.0,
+                      ),
+                    ));
+                    if (isDriver) {
+                      setFirstTimeCabLocation(currentLocation);
+                    }
+                  });
+                },
+                markers: !isDriver
+                    ? _cabDriverProvider.shuttles
+                        .where((shuttle) => shuttle.driver != null)
+                        .map((shuttle) {
+                        return Marker(
+                          infoWindow: InfoWindow(),
+                          markerId: MarkerId(shuttle.id),
+                          position: LatLng(shuttle.currentLocation.latitude,
+                              shuttle.currentLocation.longitude),
+                          icon: BitmapDescriptor.bytes(imgBytes, height: 40),
+                        );
+                      }).toSet()
+                    : {},
+                mapType: MapType.normal,
+                myLocationEnabled: true,
+                compassEnabled: true,
+                zoomControlsEnabled: false,
+                myLocationButtonEnabled: false,
+                initialCameraPosition: CameraPosition(
+                  target: _locationProvider.vitLocation,
+                  zoom: 16,
                 ),
               ),
-            )
-          : Stack(
-              children: [
-                GoogleMap(
-                  onMapCreated: (controller) async {
-                    _mapController = controller;
-                    _locationProvider
-                        .getCurrentUserLocation()
-                        .then((currentLocation) {
-                      _mapController!
-                          .animateCamera(CameraUpdate.newCameraPosition(
-                        CameraPosition(
-                          bearing: 0,
-                          target: LatLng(
-                            currentLocation.latitude,
-                            currentLocation.longitude,
-                          ),
-                          zoom: 17.0,
-                        ),
-                      ));
-                      if (isCab) {
-                        setFirstTimeCabLocation(currentLocation);
-                      }
-                    });
-                  },
-                  mapType: MapType.normal,
-                  myLocationEnabled: true,
-                  compassEnabled: true,
-                  zoomControlsEnabled: false,
-                  myLocationButtonEnabled: false,
-                  initialCameraPosition: CameraPosition(
-                    target: _locationProvider.vitLocation,
-                    zoom: 16,
+              Positioned(
+                top: 160,
+                right: 10,
+                child: Card(
+                  color: Colors.grey.shade50,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(200),
                   ),
-                  onTap: !isCab
-                      ? (argument) {
-                          setState(() {
-                            selectedLocation = argument;
-                          });
-                        }
-                      : null,
-                  markers: !isCab
-                      ? snapshot.data!.docs.map((e) {
-                          return Marker(
-                            markerId: MarkerId(e.id),
-                            position: LatLng(e['lat'], e['lng']),
-                            icon: BitmapDescriptor.bytes(
-                              imgBytes as Uint8List,
-                            ),
-                          );
-                        }).toSet()
-                      : selectedLocation == null
-                          ? {}
-                          : {
-                              Marker(
-                                markerId: const MarkerId('1'),
-                                position: selectedLocation,
-                              )
-                            },
-                ),
-                Positioned(
-                  top: 160,
-                  right: 10,
-                  child: Card(
-                    color: Colors.grey.shade50,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(200),
-                    ),
-                    child: Consumer<LocationProvider>(
-                        builder: (context, data, child) {
+                  child: Consumer<LocationProvider>(
+                    builder: (context, data, child) {
                       return ClipRRect(
                         borderRadius: BorderRadius.circular(200),
                         child: IconButton(
@@ -197,11 +207,86 @@ class _MapWidgetState extends State<MapWidget> {
                           ),
                         ),
                       );
-                    }),
+                    },
                   ),
                 ),
-              ],
-            ),
+              ),
+              Positioned(
+                bottom: 15,
+                left: 125,
+                right: 125,
+                child: FloatingActionButton.extended(
+                  // style: ButtonStyle(
+                  //   padding: const WidgetStatePropertyAll(EdgeInsets.all(10)),
+                  //   shape: WidgetStatePropertyAll(
+                  //     RoundedRectangleBorder(
+                  //       borderRadius: BorderRadius.circular(20),
+                  //     ),
+                  //   ),
+                  // ),
+                  onPressed: () {
+                    showModalBottomSheet(
+                      context: context,
+                      backgroundColor: Colors.transparent,
+                      builder: (context) {
+                        return Container(
+                          margin: const EdgeInsets.fromLTRB(8, 0, 8, 8),
+                          child: Card(
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: isDriver
+                                ? const DriverControlPanel()
+                                : OnlineShuttlesView(
+                                    onTap: (loc) {
+                                      Navigator.pop(context);
+                                      _mapController!.animateCamera(
+                                          CameraUpdate.newCameraPosition(
+                                        CameraPosition(
+                                          bearing: 0,
+                                          target: LatLng(
+                                            loc.latitude,
+                                            loc.longitude,
+                                          ),
+                                          zoom: 16.0,
+                                        ),
+                                      ));
+                                    },
+                                  ),
+                          ),
+                        );
+                      },
+                    );
+                  },
+                  label: Text(isDriver ? "Control" : "Shuttles"),
+                  icon: isDriver
+                      ? const Icon(Icons.pan_tool_alt)
+                      : Stack(
+                          children: [
+                            const Icon(Icons.bus_alert),
+                            Positioned(
+                              top: 0.1,
+                              right: 0.5,
+                              child: CircleAvatar(
+                                radius: 7.5,
+                                backgroundColor: Colors.red,
+                                child: AnimatedFlipCounter(
+                                  value: shuttleCount,
+                                  textStyle: const TextStyle(
+                                    fontSize: 10,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
+                            )
+                          ],
+                        ),
+                ),
+              )
+            ],
+          );
+        }
+      },
     );
   }
 }

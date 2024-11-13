@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/src/widgets/framework.dart';
-import 'package:flutter/src/widgets/placeholder.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:ride/widgets/ride_info.dart';
 import 'package:ride/widgets/ride_map.dart';

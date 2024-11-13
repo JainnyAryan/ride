@@ -1,11 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/src/widgets/framework.dart';
-import 'package:flutter/src/widgets/placeholder.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:google_maps_widget/google_maps_widget.dart';
 import 'package:provider/provider.dart';
-import 'package:ride/helpers/API_KEY.dart';
-import 'package:ride/providers/location_helper.dart';
+import 'package:ride/helpers/const_values.dart';
+import 'package:ride/providers/location_provider.dart';
 
 class RideMap extends StatefulWidget {
   final LatLng startLocation;
@@ -24,7 +21,7 @@ class _RideMapState extends State<RideMap> {
       child: GoogleMapsWidget(
         myLocationEnabled: true,
         myLocationButtonEnabled: true,
-        apiKey: MAPS_API_KEY.value,
+        apiKey: ConstValues.MAPS_API_KEY,
         sourceLatLng: widget.startLocation,
         destinationLatLng: widget.destLocation,
         compassEnabled: true,

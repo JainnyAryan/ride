@@ -5,12 +5,16 @@ class SideDrawerTile extends StatelessWidget {
   final Widget? leading;
   final String title;
   final Widget? trailing;
+  final Color? foregroundColor;
+  final Color? backgroundColor;
   const SideDrawerTile({
     super.key,
     required this.onTap,
     required this.title,
     this.leading,
     this.trailing,
+    this.foregroundColor,
+    this.backgroundColor,
   });
 
   @override
@@ -18,26 +22,32 @@ class SideDrawerTile extends StatelessWidget {
     return InkWell(
       onTap: onTap,
       child: Container(
-        margin: EdgeInsets.fromLTRB(0, 8, 5, 8),
+        margin: EdgeInsets.fromLTRB(0, 6, 0, 6),
         height: 50,
         width: double.maxFinite,
+        decoration: BoxDecoration(
+          color: backgroundColor,
+        ),
         child: Row(
-          mainAxisAlignment: MainAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Expanded(
-              flex: 2,
+            SizedBox(
+              width: 80,
               child: leading ?? SizedBox(),
             ),
-            Expanded(
-              flex: 5,
+            SizedBox(
               child: Text(
                 title,
-                style: Theme.of(context).textTheme.labelLarge,
+                style: Theme.of(context)
+                    .textTheme
+                    .labelLarge!
+                    .copyWith(color: foregroundColor),
+                textAlign: TextAlign.start,
               ),
             ),
-            Expanded(
-              flex: 1,
+            SizedBox(
+              width: 80,
               child: trailing ?? SizedBox(),
             ),
           ],
