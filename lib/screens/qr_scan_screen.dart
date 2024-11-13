@@ -19,32 +19,27 @@ class _QrScanScreenState extends State<QrScanScreen> {
   final QRCodeDartScanController _controller = QRCodeDartScanController();
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: QRCodeDartScanView(
-        controller: _controller,
-        child: Text("hi"),
-        onCapture: (value) async {
-          log("QR value : ${value.text}");
-          _controller.stopScan();
-          try {
-            final qrData = jsonDecode(value.text);
-            String shuttleId = qrData['shuttle'];
-            context
-                .read<AuthenticationProvider>()
-                .setScannedShuttleId(shuttleId);
-            await Navigator.pushNamed(context, ConfirmShuttleScreen.routeName);
-          } catch (e, stackTrace) {
-            log(e.toString(), stackTrace: stackTrace);
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text("Invalid QR code!"),
-              ),
-            );
-          } finally {
-            _controller.startScan();
-          }
-        },
-      ),
+    return QRCodeDartScanView(
+      controller: _controller,
+      onCapture: (value) async {
+        log("QR value : ${value.text}");
+        _controller.stopScan();
+        try {
+          final qrData = jsonDecode(value.text);
+          String shuttleId = qrData['shuttle'];
+          context.read<AuthenticationProvider>().setScannedShuttleId(shuttleId);
+          await Navigator.pushNamed(context, ConfirmShuttleScreen.routeName);
+        } catch (e, stackTrace) {
+          log(e.toString(), stackTrace: stackTrace);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text("Invalid QR code!"),
+            ),
+          );
+        } finally {
+          _controller.startScan();
+        }
+      },
     );
   }
 }

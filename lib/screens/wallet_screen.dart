@@ -108,7 +108,7 @@ class _WalletScreenState extends State<WalletScreen> {
                               });
                               await context
                                   .read<StudentProvider>()
-                                  .createWallet();
+                                  .createWallet(context.read<AuthenticationProvider>());
                               setState(() {
                                 isLoading = false;
                               });

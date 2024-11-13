@@ -1,16 +1,16 @@
 import 'dart:developer';
 
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:ride/providers/authentication_provider.dart';
+import 'package:ride/screens/home_screen.dart';
 import 'package:slider_button/slider_button.dart';
 
 class CustomAppBar extends StatefulWidget {
-  final String titleText;
   final GlobalKey<ScaffoldState> scaffoldKey;
   const CustomAppBar({
     super.key,
-    required this.titleText,
     required this.scaffoldKey,
   });
 
@@ -37,6 +37,10 @@ class _CustomAppBarState extends State<CustomAppBar> {
   Widget build(BuildContext context) {
     bool? _isDriverAssigned =
         context.watch<AuthenticationProvider>().isDriverAssigned;
+    String titleText = _authenticationProvider.isDriver
+        ? (_authenticationProvider.currentShuttleOfDriver?.vehicleNumber ??
+            "Offline")
+        : "Hi User";
     return SafeArea(
       child: Card(
         elevation: 6,
@@ -57,7 +61,7 @@ class _CustomAppBarState extends State<CustomAppBar> {
                 icon: const Icon(Icons.menu),
               ),
               Text(
-                widget.titleText,
+                titleText,
                 style: Theme.of(context).textTheme.labelLarge,
               ),
               GestureDetector(
@@ -78,8 +82,9 @@ class _CustomAppBarState extends State<CustomAppBar> {
 
   Widget _buildDriverAppBarTrailing(bool? isAssigned, BuildContext context) {
     return GestureDetector(
-      onTap: isAssigned != null
+      onTap: isAssigned == true
           ? () async {
+              bool isLoading = false;
               showModalBottomSheet(
                 isScrollControlled: true,
                 useSafeArea: false,
@@ -90,41 +95,63 @@ class _CustomAppBarState extends State<CustomAppBar> {
                 context: context,
                 builder: (context) {
                   return Container(
-                    padding: EdgeInsets.symmetric(horizontal: 20, vertical: 70),
-                    decoration: BoxDecoration(color: Colors.transparent),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 20, vertical: 70),
+                    decoration: const BoxDecoration(color: Colors.transparent),
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
                         SliderButton(
                           action: () async {
-                            log("Yeah");
-                            return true;
+                            try {
+                              setState(() {
+                                isLoading = true;
+                              });
+                              await _authenticationProvider
+                                  .removeCurrentDriverFromShuttle();
+                              Navigator.pop(context);
+                              Navigator.pushReplacementNamed(
+                                  context, HomeScreen.routeName);
+                              return true;
+                            } catch (e, stackTrace) {
+                              log(e.toString(), stackTrace: stackTrace);
+                              return false;
+                            } finally {
+                              setState(() {
+                                isLoading = false;
+                              });
+                            }
                           },
                           radius: 200,
                           height: 80,
-                          width: double.maxFinite,
+                          // width: ,
                           baseColor: Colors.red,
-                          label: Text(
+                          label: const Text(
                             "Swipe to go offline",
                             style: TextStyle(color: Colors.red),
                           ),
                           alignLabel: Alignment.center,
                           vibrationFlag: true,
                           buttonSize: 60,
-                          icon: Icon(
-                            Icons.chevron_right,
-                            color: Colors.red,
-                            size: 30,
-                          ),
+                          icon: !isLoading
+                              ? const Icon(
+                                  Icons.chevron_right,
+                                  color: Colors.red,
+                                  size: 30,
+                                )
+                              : const CircularProgressIndicator(
+                                  strokeWidth: 1,
+                                  color: Colors.grey,
+                                ),
                         ),
                         GestureDetector(
                           onTap: () {
                             Navigator.pop(context);
                           },
-                          child: CircleAvatar(
+                          child: const CircleAvatar(
                             radius: 30,
-                            backgroundColor: const Color.fromARGB(169, 0, 0, 0),
+                            backgroundColor: Color.fromARGB(169, 0, 0, 0),
                             child: Icon(
                               Icons.close,
                               size: 30,

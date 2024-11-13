@@ -4,7 +4,6 @@ import 'userr.dart';
 
 class Driver extends Userr {
   String licenseNumber;
-  String? shuttleId;
 
   Driver({
     required super.id,
@@ -12,7 +11,6 @@ class Driver extends Userr {
     required super.mobile,
     required super.email,
     required this.licenseNumber,
-    this.shuttleId,
   }) : super(type: "DRIVER");
 
   Driver driverCopyWith({
@@ -21,7 +19,6 @@ class Driver extends Userr {
     String? mobile,
     String? email,
     String? licenseNumber,
-    String? shuttleId,
   }) {
     return Driver(
       id: id ?? this.id,
@@ -29,7 +26,6 @@ class Driver extends Userr {
       mobile: mobile ?? this.mobile,
       email: email ?? this.email,
       licenseNumber: licenseNumber ?? this.licenseNumber,
-      shuttleId: shuttleId ?? this.shuttleId,
     );
   }
 
@@ -41,7 +37,6 @@ class Driver extends Userr {
       mobile: json['mobile'],
       email: json['email'],
       licenseNumber: json['driver']['license_number'],
-      shuttleId: json['driver']['shuttle_id'],
     );
   }
 
@@ -55,7 +50,6 @@ class Driver extends Userr {
       'type': type,
       'driver': {
         'license_number': licenseNumber,
-        'shuttle_id': shuttleId,
       },
     };
   }

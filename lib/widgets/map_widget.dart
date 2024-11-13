@@ -37,8 +37,7 @@ class _MapWidgetState extends State<MapWidget> {
   int shuttleCount = 0;
 
   Future<void> setFirstTimeCabLocation(LatLng latlng) async {
-    final uid = FirebaseAuth.instance.currentUser!.uid;
-    await FirebaseFirestore.instance.collection("shuttles").doc(uid).update({
+    await FirebaseFirestore.instance.collection("shuttles").doc(_authenticationProvider.currentShuttleOfDriver!.id).update({
       'lat': latlng.latitude,
       'lng': latlng.longitude,
     });
@@ -67,7 +66,8 @@ class _MapWidgetState extends State<MapWidget> {
           _locationProvider.locObj.onLocationChanged.listen((locationEvent) {
         _locationProvider.setCurrentLocation(locationEvent);
         if (_authenticationProvider.isDriver) {
-          _cabDriverProvider.updateDriverLocOnServer(locationEvent);
+          _cabDriverProvider.updateDriverLocOnServer(
+              locationEvent, _authenticationProvider);
         }
       }, cancelOnError: true);
     }

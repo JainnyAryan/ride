@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:developer';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:http_exception/http_exception.dart';
 import 'package:ride/helpers/const_values.dart';
 import 'package:ride/helpers/http_helper.dart';
 import 'package:ride/models/driver.dart';
@@ -20,6 +21,7 @@ class AuthenticationProvider with ChangeNotifier {
   bool _isDriver = false;
   bool? _isDriverAssigned;
   String _scannedShuttleId = "";
+  Shuttle? _currentShuttleOfDriver;
 
   FirebaseAuth get firebaseAuth {
     return _auth;
@@ -43,6 +45,10 @@ class AuthenticationProvider with ChangeNotifier {
 
   String get scannedShuttleId {
     return _scannedShuttleId;
+  }
+
+  Shuttle? get currentShuttleOfDriver {
+    return _currentShuttleOfDriver;
   }
 
   Future<void> tryLoginWithNumber(String mobileNo) async {
@@ -121,9 +127,9 @@ class AuthenticationProvider with ChangeNotifier {
 
   Future<void> checkDriverAssignment() async {
     try {
+      final idToken = await _auth.currentUser!.getIdToken();
       _isDriverAssigned = null;
       notifyListeners();
-      final idToken = await _auth.currentUser!.getIdToken();
       final response = await http.get(
         Uri.parse(
             "${ConstValues.API_URL}/drivers/${(_currentUser as Driver).id}/check-assignment"),
@@ -132,6 +138,8 @@ class AuthenticationProvider with ChangeNotifier {
       HttpHelper.validateResponseStatus(response);
       final data = jsonDecode(response.body);
       _isDriverAssigned = data["assigned"];
+      _currentShuttleOfDriver =
+          data['shuttle'] != null ? Shuttle.fromJson(data['shuttle']) : null;
       notifyListeners();
     } catch (e, stackTrace) {
       log(e.toString(), stackTrace: stackTrace);
@@ -158,7 +166,7 @@ class AuthenticationProvider with ChangeNotifier {
     }
   }
 
-  Future<void> setCurrentDriver() async {
+  Future<void> setCurrentDriverForShuttle() async {
     try {
       final idToken = await _auth.currentUser!.getIdToken();
       final response = await http.patch(
@@ -166,6 +174,28 @@ class AuthenticationProvider with ChangeNotifier {
         body: jsonEncode({
           'shuttle_id': _scannedShuttleId,
           'driver': (_currentUser as Driver).toJson(),
+        }),
+        headers: {
+          'Authorization': 'Bearer $idToken',
+          'Content-Type': 'application/json',
+        },
+      );
+      HttpHelper.validateResponseStatus(response);
+      final data = jsonDecode(response.body);
+      log(data.toString());
+    } catch (e, stackTrace) {
+      log(e.toString(), stackTrace: stackTrace);
+      rethrow;
+    }
+  }
+
+  Future<void> removeCurrentDriverFromShuttle() async {
+    try {
+      final idToken = await _auth.currentUser!.getIdToken();
+      final response = await http.patch(
+        Uri.parse("${ConstValues.API_URL}/shuttles/remove-driver"),
+        body: jsonEncode({
+          'shuttle_id': _currentShuttleOfDriver!.id,
         }),
         headers: {
           'Authorization': 'Bearer $idToken',
@@ -192,6 +222,7 @@ class AuthenticationProvider with ChangeNotifier {
 
   void updateCurrentUserData(Userr user) {
     _currentUser = user;
+    notifyListeners();
   }
 
   Future<void> signout() async {

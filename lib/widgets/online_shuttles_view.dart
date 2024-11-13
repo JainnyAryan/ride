@@ -26,6 +26,9 @@ class OnlineShuttlesView extends StatelessWidget {
           ),
           ...Provider.of<DriverShuttleProvider>(context, listen: false)
               .shuttles
+              .where(
+                (shuttle) => shuttle.driver != null,
+              )
               .map(
             (shuttle) {
               return SideDrawerTile(

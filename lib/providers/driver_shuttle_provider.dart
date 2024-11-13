@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:location/location.dart';
 import 'package:ride/models/shuttle.dart';
+import 'package:ride/providers/authentication_provider.dart';
 
 class DriverShuttleProvider with ChangeNotifier {
   Map<String, Shuttle> _shuttles = {};
@@ -22,9 +23,8 @@ class DriverShuttleProvider with ChangeNotifier {
     });
   }
 
-  Future<void> updateDriverLocOnServer(LocationData event) async {
-    final uid = FirebaseAuth.instance.currentUser!.uid;
-    await FirebaseFirestore.instance.collection("shuttles").doc(uid).update({
+  Future<void> updateDriverLocOnServer(LocationData event, AuthenticationProvider authenticationProvider) async {
+    await FirebaseFirestore.instance.collection("shuttles").doc(authenticationProvider.currentShuttleOfDriver!.id).update({
       'lat': event.latitude,
       'lng': event.longitude,
     });

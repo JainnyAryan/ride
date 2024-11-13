@@ -28,7 +28,9 @@ class _AddMoneyWidgetState extends State<AddMoneyWidget> {
       _isLoading = true;
     });
     try {
-      await context.read<StudentProvider>().addMoneyToWallet(_trips);
+      await context
+          .read<StudentProvider>()
+          .addMoneyToWallet(_trips, context.read<AuthenticationProvider>());
       widget.onAddMoneySuccess();
       ScaffoldMessenger.of(context).clearSnackBars();
       ScaffoldMessenger.of(context).showSnackBar(

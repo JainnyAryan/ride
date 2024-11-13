@@ -21,7 +21,8 @@ class _UserInfoFormState extends State<UserInfoForm> {
   Future<void> submitDetails(String name, String email, String regNo) async {
     try {
       await Provider.of<StudentProvider>(context, listen: false)
-          .createStudentInDatabase(name, email, regNo);
+          .createStudentInDatabase(
+              name, email, regNo, context.read<AuthenticationProvider>());
       Navigator.of(context).pushReplacementNamed(HomeScreen.routeName);
     } catch (e) {
       rethrow;

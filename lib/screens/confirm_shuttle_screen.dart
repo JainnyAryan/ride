@@ -76,7 +76,7 @@ class _ConfirmShuttleScreenState extends State<ConfirmShuttleScreen> {
                             try {
                               await context
                                   .read<AuthenticationProvider>()
-                                  .setCurrentDriver();
+                                  .setCurrentDriverForShuttle();
                               Navigator.pushNamedAndRemoveUntil(
                                 context,
                                 HomeScreen.routeName,

@@ -24,26 +24,25 @@ class HomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     AuthenticationProvider _authenticationProvider =
         Provider.of<AuthenticationProvider>(context, listen: false);
-    bool isDriver = _authenticationProvider.isDriver;
-    String appBarText = isDriver ? "Driver Side" : "Student Side";
     return Scaffold(
       drawer: SideDrawer(),
       key: _key,
       body: Stack(
         children: [
-          FutureBuilder(
-              future: _authenticationProvider.checkDriverAssignment(),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return _loadingScreen();
-                } else if (!_authenticationProvider.isDriverAssigned!) {
-                  return _notAssignedScreen(context);
-                }
-                return MapWidget();
-              }),
+          _authenticationProvider.isDriver
+              ? FutureBuilder(
+                  future: _authenticationProvider.checkDriverAssignment(),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return _loadingScreen();
+                    } else if (!_authenticationProvider.isDriverAssigned!) {
+                      return _notAssignedScreen(context);
+                    }
+                    return MapWidget();
+                  })
+              : MapWidget(),
           CustomAppBar(
             scaffoldKey: _key,
-            titleText: appBarText,
           ),
         ],
       ),
@@ -75,7 +74,7 @@ class HomeScreen extends StatelessWidget {
               onPressed: () {
                 Navigator.pushNamed(context, QrScanScreen.routeName);
               },
-              child: Text("Go Online"),
+              child: Text("Scan QR"),
             ),
           ],
         ),

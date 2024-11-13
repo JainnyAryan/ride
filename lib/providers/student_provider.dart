@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:developer';
 
+import 'package:flutter/material.dart';
 import 'package:ride/helpers/const_values.dart';
 import 'package:ride/helpers/http_helper.dart';
 import 'package:ride/models/student.dart';
@@ -9,18 +10,19 @@ import 'package:ride/models/wallet.dart';
 import 'package:ride/providers/authentication_provider.dart';
 import 'package:http/http.dart' as http;
 
-class StudentProvider extends AuthenticationProvider {
-  Future<void> createStudentInDatabase(
-      String name, String email, String regNo) async {
+class StudentProvider with ChangeNotifier {
+  Future<void> createStudentInDatabase(String name, String email, String regNo,
+      AuthenticationProvider authenticationProvider) async {
     Userr newUser = Student(
-      id: super.firebaseAuth.currentUser!.uid,
+      id: authenticationProvider.firebaseAuth.currentUser!.uid,
       name: name,
-      mobile: super.firebaseAuth.currentUser!.phoneNumber!,
+      mobile: authenticationProvider.firebaseAuth.currentUser!.phoneNumber!,
       email: email,
       registrationNumber: regNo,
     );
     log(newUser.toJson().toString());
-    final idToken = await super.firebaseAuth.currentUser!.getIdToken();
+    final idToken =
+        await authenticationProvider.firebaseAuth.currentUser!.getIdToken();
     try {
       final response = await http.post(
           Uri.parse("${ConstValues.API_URL}/students/create"),
@@ -31,21 +33,23 @@ class StudentProvider extends AuthenticationProvider {
           });
       log(response.body);
       HttpHelper.validateResponseStatus(response);
-      super.setIsNewUser(false);
-      super.updateCurrentUserData(newUser);
+      authenticationProvider.setIsNewUser(false);
+      authenticationProvider.updateCurrentUserData(newUser);
     } catch (e, stackTrace) {
       log(e.toString(), stackTrace: stackTrace);
       rethrow;
     }
   }
 
-  Future<void> createWallet() async {
+  Future<void> createWallet(
+      AuthenticationProvider authenticationProvider) async {
     try {
-      final idToken = await super.firebaseAuth.currentUser!.getIdToken();
+      final idToken =
+          await authenticationProvider.firebaseAuth.currentUser!.getIdToken();
       final response = await http.post(
         Uri.parse("${ConstValues.API_URL}/wallets/create"),
         body: jsonEncode({
-          'user_id': super.currentUser.id,
+          'user_id': authenticationProvider.currentUser.id,
         }),
         headers: {
           'Content-Type': 'application/json',
@@ -54,7 +58,7 @@ class StudentProvider extends AuthenticationProvider {
       );
       log(response.body);
       HttpHelper.validateResponseStatus(response);
-      (super.currentUser as Student).wallet =
+      (authenticationProvider.currentUser as Student).wallet =
           Wallet.fromJson(jsonDecode(response.body));
       notifyListeners();
     } catch (e, stackTrace) {
@@ -63,14 +67,16 @@ class StudentProvider extends AuthenticationProvider {
     }
   }
 
-  Future<void> addMoneyToWallet(int trips) async {
+  Future<void> addMoneyToWallet(
+      int trips, AuthenticationProvider authenticationProvider) async {
     try {
       log("Trips to add : $trips");
-      final idToken = await super.firebaseAuth.currentUser!.getIdToken();
+      final idToken =
+          await authenticationProvider.firebaseAuth.currentUser!.getIdToken();
       final response = await http.put(
         Uri.parse("${ConstValues.API_URL}/wallets/add-money"),
         body: jsonEncode({
-          'id': (super.currentUser as Student).wallet!.id,
+          'id': (authenticationProvider.currentUser as Student).wallet!.id,
           'trips': trips,
         }),
         headers: {
@@ -80,8 +86,11 @@ class StudentProvider extends AuthenticationProvider {
       );
       log(response.body);
       HttpHelper.validateResponseStatus(response);
-      super.updateCurrentUserData((super.currentUser as Student)
-          .studentCopyWith(wallet: Wallet.fromJson(jsonDecode(response.body))));
+      authenticationProvider.updateCurrentUserData(
+        (authenticationProvider.currentUser as Student).studentCopyWith(
+          wallet: Wallet.fromJson(jsonDecode(response.body)),
+        ),
+      );
       notifyListeners();
     } catch (e, stackTrace) {
       log(e.toString(), stackTrace: stackTrace);

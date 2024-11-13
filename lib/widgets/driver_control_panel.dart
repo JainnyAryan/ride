@@ -39,11 +39,6 @@ class DriverControlPanel extends StatelessWidget {
           ),
           SideDrawerTile(
             onTap: () {},
-            title: "Switch Shuttle",
-            leading: Icon(Icons.switch_left),
-          ),
-          SideDrawerTile(
-            onTap: () {},
             title: "Help",
             leading: Icon(Icons.help_center),
           ),
