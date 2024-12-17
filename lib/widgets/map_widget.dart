@@ -37,7 +37,10 @@ class _MapWidgetState extends State<MapWidget> {
   int shuttleCount = 0;
 
   Future<void> setFirstTimeCabLocation(LatLng latlng) async {
-    await FirebaseFirestore.instance.collection("shuttles").doc(_authenticationProvider.currentShuttleOfDriver!.id).update({
+    await FirebaseFirestore.instance
+        .collection("shuttles")
+        .doc(_authenticationProvider.currentShuttleOfDriver!.id)
+        .update({
       'lat': latlng.latitude,
       'lng': latlng.longitude,
     });
@@ -76,7 +79,7 @@ class _MapWidgetState extends State<MapWidget> {
 
   @override
   void didChangeDependencies() async {
-    imgBytes = await rootBundle.load('assets/images/taxi.png');
+    imgBytes = await rootBundle.load('assets/images/bus.png');
     imgBytes = imgBytes!.buffer.asUint8List();
     super.didChangeDependencies();
   }
@@ -156,7 +159,10 @@ class _MapWidgetState extends State<MapWidget> {
                         .where((shuttle) => shuttle.driver != null)
                         .map((shuttle) {
                         return Marker(
-                          infoWindow: InfoWindow(),
+                          infoWindow: InfoWindow(
+                            title: shuttle.vehicleNumber,
+                            snippet: shuttle.regionType,
+                          ),
                           markerId: MarkerId(shuttle.id),
                           position: LatLng(shuttle.currentLocation.latitude,
                               shuttle.currentLocation.longitude),
@@ -224,40 +230,42 @@ class _MapWidgetState extends State<MapWidget> {
                   //     ),
                   //   ),
                   // ),
-                  onPressed: () {
-                    showModalBottomSheet(
-                      context: context,
-                      backgroundColor: Colors.transparent,
-                      builder: (context) {
-                        return Container(
-                          margin: const EdgeInsets.fromLTRB(8, 0, 8, 8),
-                          child: Card(
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: isDriver
-                                ? const DriverControlPanel()
-                                : OnlineShuttlesView(
-                                    onTap: (loc) {
-                                      Navigator.pop(context);
-                                      _mapController!.animateCamera(
-                                          CameraUpdate.newCameraPosition(
-                                        CameraPosition(
-                                          bearing: 0,
-                                          target: LatLng(
-                                            loc.latitude,
-                                            loc.longitude,
-                                          ),
-                                          zoom: 16.0,
-                                        ),
-                                      ));
-                                    },
+                  onPressed: !isDriver && shuttleCount == 0
+                      ? null
+                      : () {
+                          showModalBottomSheet(
+                            context: context,
+                            backgroundColor: Colors.transparent,
+                            builder: (context) {
+                              return Container(
+                                margin: const EdgeInsets.fromLTRB(8, 0, 8, 8),
+                                child: Card(
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(20),
                                   ),
-                          ),
-                        );
-                      },
-                    );
-                  },
+                                  child: isDriver
+                                      ? const DriverControlPanel()
+                                      : OnlineShuttlesView(
+                                          onTap: (loc) {
+                                            Navigator.pop(context);
+                                            _mapController!.animateCamera(
+                                                CameraUpdate.newCameraPosition(
+                                              CameraPosition(
+                                                bearing: 0,
+                                                target: LatLng(
+                                                  loc.latitude,
+                                                  loc.longitude,
+                                                ),
+                                                zoom: 16.0,
+                                              ),
+                                            ));
+                                          },
+                                        ),
+                                ),
+                              );
+                            },
+                          );
+                        },
                   label: Text(isDriver ? "Control" : "Shuttles"),
                   icon: isDriver
                       ? const Icon(Icons.pan_tool_alt)

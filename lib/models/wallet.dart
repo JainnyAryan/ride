@@ -1,30 +1,34 @@
 class Wallet {
   final String id;
   final double amount;
+  final DateTime? lastUsed;
 
   Wallet({
     required this.id,
     required this.amount,
+    this.lastUsed,
   });
 
-  // Convert Wallet object to JSON (Map<String, dynamic>)
   Map<String, dynamic> toJson() {
     return {
       'id': id,
       'amount': amount,
+      'lastUsed': lastUsed?.toIso8601String(), 
     };
   }
 
-  // Create a Wallet object from JSON
   factory Wallet.fromJson(Map<String, dynamic> json) {
     return Wallet(
       id: json['id'],
       amount: json['amount'].toDouble(),
+      lastUsed: json['lastUsed'] != null
+          ? DateTime.parse(json['lastUsed']) 
+          : null,
     );
   }
 
-   @override
+  @override
   String toString() {
-    return 'Wallet(id: $id, amount: $amount)';
+    return 'Wallet(id: $id, amount: $amount, lastUsed: $lastUsed)';
   }
 }

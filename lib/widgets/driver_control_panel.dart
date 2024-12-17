@@ -10,6 +10,7 @@ class DriverControlPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
+      height: 150,
       child: Column(
         children: [
           Container(
@@ -32,16 +33,16 @@ class DriverControlPanel extends StatelessWidget {
             title: "Scan Face",
             leading: Icon(Icons.face),
           ),
-          SideDrawerTile(
-            onTap: () {},
-            title: "Invoke EOD",
-            leading: Icon(Icons.timelapse_rounded),
-          ),
-          SideDrawerTile(
-            onTap: () {},
-            title: "Help",
-            leading: Icon(Icons.help_center),
-          ),
+          // SideDrawerTile(
+          //   onTap: () {},
+          //   title: "Invoke EOD",
+          //   leading: Icon(Icons.timelapse_rounded),
+          // ),
+          // SideDrawerTile(
+          //   onTap: () {},
+          //   title: "Help",
+          //   leading: Icon(Icons.help_center),
+          // ),
         ],
       ),
     );

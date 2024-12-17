@@ -1,6 +1,7 @@
 import 'dart:developer';
 
 import 'package:flutter/material.dart';
+import 'package:lottie/lottie.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 import 'package:ride/providers/location_provider.dart';
@@ -55,7 +56,7 @@ class HomeScreen extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Image.asset("assets/images/taxi.png"),
+            Lottie.asset("assets/loading_bus.json"),
           ],
         ),
       ),
@@ -68,7 +69,7 @@ class HomeScreen extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Image.asset("assets/images/taxi.png"),
+            Image.asset("assets/images/bus.png"),
             Text("You are offline!"),
             ElevatedButton(
               onPressed: () {

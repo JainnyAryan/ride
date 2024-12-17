@@ -24,29 +24,28 @@ class _FaceScanScreenState extends State<FaceScanScreen> {
   @override
   void initState() {
     controller = FaceCameraController(
-      defaultCameraLens: CameraLens.front,
+      defaultCameraLens: CameraLens.back,
       performanceMode: FaceDetectorMode.accurate,
-      imageResolution: ImageResolution.veryHigh,
-      onCapture: (File? image) {
+      imageResolution: ImageResolution.high,
+      onCapture: (File? image) async {
         log("Face Captured");
-        controller.stopImageStream();
-        final Uint8List imageData = image!.readAsBytesSync();
-        Provider.of<ServerInteractionProvider>(context, listen: false)
-            .sendImageForRecognition(imageData);
+        await controller.stopImageStream();
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => ScannedFaceScreen(image: image),
+            builder: (context) => ScannedFaceScreen(image: image!),
           ),
         ).then(
-          (value) {
-            controller.startImageStream();
+          (value) async {
+            await controller.startImageStream();
           },
         );
       },
       onFaceDetected: (face) {
-        log("Face detected");
-        controller.captureImage();
+        if (face != null) {
+          log("Face detected ${face.boundingBox.toString()}");
+          controller.captureImage();
+        }
       },
     );
     super.initState();
@@ -70,22 +69,10 @@ class _FaceScanScreenState extends State<FaceScanScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
         body: SmartFaceCamera(
+      indicatorShape: IndicatorShape.none,
+      showCameraLensControl: false,
       controller: controller,
       message: 'Center your face in the square',
-      // indicatorBuilder: (context, detectedFace, imageSize) {
-      //   return Center(
-      //     child: Container(
-      //       height: 200,
-      //       width: 200,
-      //       decoration: BoxDecoration(
-      //         border: Border.all(),
-      //       ),
-      //       child: Text(detectedFace != null
-      //           ? detectedFace.face!.boundingBox.toString()
-      //           : ""),
-      //     ),
-      //   );
-      // },
     ));
   }
 }

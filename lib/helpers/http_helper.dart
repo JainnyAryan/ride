@@ -13,6 +13,8 @@ class HttpHelper {
       throw InternalServerErrorHttpException(data: responseData);
     } else if (response.statusCode == HttpStatus.badRequest.code) {
       throw BadRequestHttpException(data: responseData);
+    } else if (response.statusCode == HttpStatus.forbidden.code) {
+      throw ForbiddenHttpException(data: responseData);
     } else if (![HttpStatus.ok.code, HttpStatus.created.code]
         .contains(response.statusCode)) {
       throw HttpException(

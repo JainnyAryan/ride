@@ -1,4 +1,3 @@
-
 import 'package:expandable_page_view/expandable_page_view.dart';
 import 'package:flutter/material.dart';
 import 'package:ride/widgets/mobile_number_form.dart';
@@ -25,31 +24,36 @@ class _AuthScreenState extends State<AuthScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Center(
-        child: Container(
-          padding: const EdgeInsets.all(10),
-          child: Card(
-            child: ExpandablePageView(
-              physics: const NeverScrollableScrollPhysics(),
-              controller: _controller,
-              children: [
-                // UserInfoForm(),
-                MobileNumberForm(
-                  onTapIfEverythingOk: () {
-                    _controller.nextPage(
-                      duration: const Duration(milliseconds: 200),
-                      curve: Curves.easeOut,
-                    );
-                  },
+        child: ScrollConfiguration(
+          behavior: const ScrollBehavior().copyWith(overscroll: false),
+          child: Container(
+            padding: const EdgeInsets.all(10),
+            child: SingleChildScrollView(
+              child: Card(
+                child: ExpandablePageView(
+                  physics: const NeverScrollableScrollPhysics(),
+                  controller: _controller,
+                  children: [
+                    // UserInfoForm(),
+                    MobileNumberForm(
+                      onTapIfEverythingOk: () {
+                        _controller.nextPage(
+                          duration: const Duration(milliseconds: 200),
+                          curve: Curves.easeOut,
+                        );
+                      },
+                    ),
+                    OtpForm(
+                      onTapAnotherNumber: () {
+                        _controller.previousPage(
+                          duration: const Duration(milliseconds: 200),
+                          curve: Curves.easeOut,
+                        );
+                      },
+                    ),
+                  ],
                 ),
-                OtpForm(
-                  onTapAnotherNumber: () {
-                    _controller.previousPage(
-                      duration: const Duration(milliseconds: 200),
-                      curve: Curves.easeOut,
-                    );
-                  },
-                ),
-              ],
+              ),
             ),
           ),
         ),

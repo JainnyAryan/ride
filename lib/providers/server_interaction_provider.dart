@@ -47,11 +47,6 @@ class ServerInteractionProvider with ChangeNotifier {
     });
   }
 
-  void sendImageForRecognition(Uint8List imageData) {
-    socket.emit('face_recognition', {
-      'frame': base64.encode(imageData),
-    });
-  }
 
   Future<void> testProtectedApi(String idToken) async {
     final response = await http.get(

@@ -43,6 +43,6 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 android/app/src/main/AndroidManifest.xml
-lib/helpers/API_KEY.dart
+lib/helpers/const_values.dart
 
 /android/app/google-services.json

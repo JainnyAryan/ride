@@ -1,6 +1,7 @@
 import 'dart:developer';
 import 'dart:io';
 
+import 'package:http/http.dart' as http;
 import 'package:dart_ping/dart_ping.dart';
 import 'package:face_camera/face_camera.dart';
 import 'package:firebase_app_check/firebase_app_check.dart';
@@ -10,6 +11,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:http_exception/http_exception.dart';
+import 'package:lottie/lottie.dart';
 import 'package:provider/provider.dart';
 import 'package:ride/helpers/const_values.dart';
 import 'package:ride/providers/server_interaction_provider.dart';
@@ -21,25 +23,20 @@ import 'package:ride/screens/auth_screen.dart';
 import 'package:ride/screens/confirm_shuttle_screen.dart';
 import 'package:ride/screens/face_scan_screen.dart';
 import 'package:ride/screens/home_screen.dart';
+import 'package:ride/screens/profile_screen.dart';
 import 'package:ride/screens/qr_scan_screen.dart';
 import 'package:ride/screens/ride_screen.dart';
 import 'package:ride/screens/settings_screen.dart';
 import 'package:ride/screens/splash_Screen.dart';
 import 'package:ride/screens/user_info_screen.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:ride/screens/wallet_history_screen.dart';
 import 'package:ride/screens/wallet_screen.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(
-      options: kIsWeb
-          ? const FirebaseOptions(
-              apiKey: "AIzaSyB2hptp7ap-cHNx2WjMHRwxaXljzOhcvCI",
-              appId: "1:1032740394300:android:d2750f1e3737a878a8fa39",
-              messagingSenderId: "1032740394300",
-              projectId: "ride-7d2c5")
-          : null);
+  await Firebase.initializeApp();
   await FirebaseAppCheck.instance
       .activate(androidProvider: AndroidProvider.debug);
   await GetStorage.init();
@@ -49,22 +46,22 @@ void main() async {
       statusBarColor: Color.fromRGBO(0, 0, 0, 0.541),
     ),
   );
-  runApp(const MyApp());
+  runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  MyApp({super.key});
 
-  Future<bool> checkIsConnected() async {
+  final Future<bool> _isConnectedFuture = checkIsConnected();
+
+  static Future<bool> checkIsConnected() async {
     try {
-      final result1 =
-          await Ping(ConstValues.HOST, count: 1, timeout: 1).stream.first;
-      log("PING ERROR : ${result1.error}");
-      if (result1.error == null) {
+      final result1 = await http.get(Uri.parse('${ConstValues.API_URL}/'));
+      if (result1.statusCode == 200) {
         log("CONNECTED NET!");
         return true;
       }
-    } on SocketException catch (e) {
+    } on Exception catch (e) {
       log(e.toString());
       log("NOT CONNECTED NET!");
       return false;
@@ -123,13 +120,13 @@ class MyApp extends StatelessWidget {
               ),
             )),
         home: FutureBuilder(
-            future: null,
+            future: _isConnectedFuture,
             builder: (context, connectionSnapshot) {
               if (connectionSnapshot.connectionState ==
                   ConnectionState.waiting) {
                 return _loadingScreen();
               } else if (connectionSnapshot.hasData) {
-                bool isConnected = connectionSnapshot.data! as bool;
+                bool isConnected = connectionSnapshot.data!;
                 if (!isConnected) {
                   return _networkErrorScreen();
                 }
@@ -159,8 +156,10 @@ class MyApp extends StatelessWidget {
           FaceScanScreen.routeName: (ctx) => const FaceScanScreen(),
           SettingsScreen.routeName: (ctx) => const SettingsScreen(),
           WalletScreen.routeName: (ctx) => const WalletScreen(),
-          QrScanScreen.routeName :(ctx) => QrScanScreen(),
-          ConfirmShuttleScreen.routeName :(ctx) => ConfirmShuttleScreen(),
+          QrScanScreen.routeName: (ctx) => QrScanScreen(),
+          ConfirmShuttleScreen.routeName: (ctx) => ConfirmShuttleScreen(),
+          WalletHistoryScreen.routeName: (ctx) => WalletHistoryScreen(),
+          ProfileScreen.routeName: (ctx) => ProfileScreen(),
         },
       ),
     );
@@ -172,7 +171,7 @@ class MyApp extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Image.asset("assets/images/taxi.png"),
+            Lottie.asset("assets/loading_bus.json"),
           ],
         ),
       ),
@@ -185,7 +184,7 @@ class MyApp extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Image.asset("assets/images/taxi.png"),
+            Image.asset("assets/images/bus.png"),
             Text("Network error"),
           ],
         ),

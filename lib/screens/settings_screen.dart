@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 import 'package:ride/providers/authentication_provider.dart';
+import 'package:ride/screens/profile_screen.dart';
 import 'package:ride/widgets/side_drawer_tile.dart';
 
 class SettingsScreen extends StatelessWidget {
@@ -22,17 +24,23 @@ class SettingsScreen extends StatelessWidget {
       body: Column(
         children: [
           SideDrawerTile(
-            onTap: () {},
+            onTap: () {
+              Navigator.pushNamed(context, ProfileScreen.routeName);
+            },
             title: "Profile",
             leading: const Icon(Icons.person),
           ),
           SideDrawerTile(
-            onTap: () {},
+            onTap: () async {
+              await openAppSettings();
+            },
             title: "Notifications",
             leading: const Icon(Icons.notifications),
           ),
           SideDrawerTile(
-            onTap: () {},
+            onTap: () async {
+              await openAppSettings();
+            },
             title: "Location",
             leading: const Icon(Icons.gps_fixed),
           ),
@@ -55,7 +63,7 @@ class SettingsScreen extends StatelessWidget {
                                 listen: false)
                             .signout();
                       },
-                      child: const Text("Yes"),
+                      child: const Text("Logout"),
                     ),
                     TextButton(
                       onPressed: () {

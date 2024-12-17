@@ -40,6 +40,7 @@ class _UserInfoFormState extends State<UserInfoForm> {
     try {
       await submitDetails(_studentName, _studentEmail, _studentRegNo);
     } catch (e) {
+      ScaffoldMessenger.of(context).clearSnackBars();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(e.toString()),

@@ -67,17 +67,21 @@ class StudentProvider with ChangeNotifier {
     }
   }
 
-  Future<void> addMoneyToWallet(
-      int trips, AuthenticationProvider authenticationProvider) async {
+  Future<void> updateWalletAmount(Student student, int trips, bool addition,
+      AuthenticationProvider authenticationProvider) async {
     try {
       log("Trips to add : $trips");
       final idToken =
           await authenticationProvider.firebaseAuth.currentUser!.getIdToken();
       final response = await http.put(
-        Uri.parse("${ConstValues.API_URL}/wallets/add-money"),
+        Uri.parse("${ConstValues.API_URL}/wallets/update-amount"),
         body: jsonEncode({
-          'id': (authenticationProvider.currentUser as Student).wallet!.id,
+          'id': student.wallet!.id,
           'trips': trips,
+          'addition': addition,
+          'shuttle': addition
+              ? null
+              : authenticationProvider.currentShuttleOfDriver!.toJson(),
         }),
         headers: {
           'Content-Type': 'application/json',
@@ -86,12 +90,14 @@ class StudentProvider with ChangeNotifier {
       );
       log(response.body);
       HttpHelper.validateResponseStatus(response);
-      authenticationProvider.updateCurrentUserData(
-        (authenticationProvider.currentUser as Student).studentCopyWith(
-          wallet: Wallet.fromJson(jsonDecode(response.body)),
-        ),
-      );
-      notifyListeners();
+      if (authenticationProvider.currentUser is Student) {
+        authenticationProvider.updateCurrentUserData(
+          (authenticationProvider.currentUser as Student).studentCopyWith(
+            wallet: Wallet.fromJson(jsonDecode(response.body)),
+          ),
+        );
+        notifyListeners();
+      }
     } catch (e, stackTrace) {
       log(e.toString(), stackTrace: stackTrace);
       rethrow;

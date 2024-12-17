@@ -3,6 +3,7 @@ import 'dart:developer';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_otp_text_field/flutter_otp_text_field.dart';
+import 'package:lottie/lottie.dart';
 import 'package:provider/provider.dart';
 import 'package:ride/providers/authentication_provider.dart';
 
@@ -36,6 +37,7 @@ class _OtpFormState extends State<OtpForm> {
     final isValid = _formKey.currentState!.validate();
 
     if (isValid) {
+      _userInput = _controller.text;
       _formKey.currentState!.save();
       _controller.clear();
       FocusScope.of(context).unfocus();
@@ -43,6 +45,7 @@ class _OtpFormState extends State<OtpForm> {
         setState(() {
           isLoading = true;
         });
+        log("user otp entered : $_userInput");
         await loginWithOTP(_userInput);
         if (widget.onTapIfEverythingOk != null) {
           widget.onTapIfEverythingOk!();
@@ -57,6 +60,7 @@ class _OtpFormState extends State<OtpForm> {
           default:
             msg = "Some error occured!";
         }
+        ScaffoldMessenger.of(context).clearSnackBars();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(msg),
@@ -70,67 +74,79 @@ class _OtpFormState extends State<OtpForm> {
     }
   }
 
+  @override
   Widget build(BuildContext context) {
     return Container(
-      height: MediaQuery.of(context).size.height * 0.3,
       margin: EdgeInsets.symmetric(vertical: 20),
-      child: Form(
-        key: _formKey,
-        child: Container(
-          margin: const EdgeInsets.all(20),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              SizedBox(
-                width: 150,
-                child: TextFormField(
-                  autofocus: true,
-                  textAlign: TextAlign.center,
-                  validator: (value) {
-                    if (value!.isEmpty || value.length != 6) {
-                      return 'OTP shall be of 6 digits';
-                    }
-                    return null;
-                  },
-                  onSaved: (newValue) {
-                    _userInput = newValue!;
-                  },
-                  controller: _controller,
-                  keyboardType: TextInputType.number,
-                  decoration: InputDecoration(
-                    label: Text(textInputText),
-                    alignLabelWithHint: true,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
+      child: Column(
+        children: [
+          Lottie.asset(
+            'assets/otp_lottie.json',
+            height: MediaQuery.of(context).size.height * 0.4,
+            fit: BoxFit.cover,
+          ),
+          Form(
+            key: _formKey,
+            child: Container(
+              margin: const EdgeInsets.only(bottom: 30, top: 30),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  SizedBox(
+                    width: 150,
+                    child: TextFormField(
+                      textAlign: TextAlign.center,
+                      validator: (value) {
+                        if (value!.isEmpty || value.length != 6) {
+                          return 'OTP shall be of 6 digits';
+                        }
+                        return null;
+                      },
+                      onSaved: (newValue) {
+                        _userInput = newValue!;
+                      },
+                      controller: _controller,
+                      keyboardType: TextInputType.number,
+                      decoration: InputDecoration(
+                        label: Text(textInputText),
+                        alignLabelWithHint: true,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
                     ),
                   ),
-                ),
+                  SizedBox(
+                    height: 10,
+                  ),
+                  InkWell(
+                    onTap: widget.onTapAnotherNumber,
+                    child: const Text(
+                      "I want to use another number",
+                      textAlign: TextAlign.start,
+                      style: TextStyle(
+                          color: Colors.blue,
+                          decoration: TextDecoration.underline),
+                    ),
+                  ),
+                ],
               ),
-              InkWell(
-                onTap: widget.onTapAnotherNumber,
-                child: const Text(
-                  "I want to use another number",
-                  textAlign: TextAlign.start,
-                  style: TextStyle(
-                      color: Colors.blue, decoration: TextDecoration.underline),
-                ),
-              ),
-              ElevatedButton.icon(
-                onPressed: isLoading
-                    ? null
-                    : () async {
-                        await trySubmit(context);
-                      },
-                icon: const Icon(Icons.lock),
-                label: Text(buttonText),
-                style: ButtonStyle(
-                  backgroundColor:
-                      WidgetStatePropertyAll(isLoading ? Colors.grey : null),
-                ),
-              )
-            ],
+            ),
           ),
-        ),
+          ElevatedButton.icon(
+            onPressed: isLoading
+                ? null
+                : () async {
+                    await trySubmit(context);
+                  },
+            icon: const Icon(Icons.lock),
+            label: Text(buttonText),
+            style: ButtonStyle(
+              backgroundColor:
+                  WidgetStatePropertyAll(isLoading ? Colors.grey : null),
+            ),
+          )
+        ],
       ),
     );
   }

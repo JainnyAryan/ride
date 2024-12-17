@@ -28,6 +28,17 @@ class Shuttle {
     );
   }
 
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'vehicle_number': vehicleNumber,
+      'region_type': regionType,
+      'lat': currentLocation.latitude,
+      'lng': currentLocation.longitude,
+      'driver': driver?.toJson(),
+    };
+  }
+
   @override
   String toString() {
     return '\nShuttle Details:\n'

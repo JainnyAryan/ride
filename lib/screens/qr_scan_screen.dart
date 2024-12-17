@@ -15,31 +15,104 @@ class QrScanScreen extends StatefulWidget {
   State<QrScanScreen> createState() => _QrScanScreenState();
 }
 
-class _QrScanScreenState extends State<QrScanScreen> {
+class _QrScanScreenState extends State<QrScanScreen>
+    with SingleTickerProviderStateMixin {
   final QRCodeDartScanController _controller = QRCodeDartScanController();
+  late AnimationController _animationController;
+  late Animation<double> _animation;
+
+  @override
+  void initState() {
+    super.initState();
+
+    // Animation setup
+    _animationController = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 500))
+      ..repeat(reverse: true);
+    _animation =
+        Tween<double>(begin: 0.0, end: 1.0).animate(_animationController);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    _animationController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
-    return QRCodeDartScanView(
-      controller: _controller,
-      onCapture: (value) async {
-        log("QR value : ${value.text}");
-        _controller.stopScan();
-        try {
-          final qrData = jsonDecode(value.text);
-          String shuttleId = qrData['shuttle'];
-          context.read<AuthenticationProvider>().setScannedShuttleId(shuttleId);
-          await Navigator.pushNamed(context, ConfirmShuttleScreen.routeName);
-        } catch (e, stackTrace) {
-          log(e.toString(), stackTrace: stackTrace);
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text("Invalid QR code!"),
+    return Scaffold(
+      body: Stack(
+        children: [
+          QRCodeDartScanView(
+            controller: _controller,
+            onCapture: (value) async {
+              log("QR value : ${value.text}");
+              _controller.stopScan();
+              try {
+                final qrData = jsonDecode(value.text);
+                String shuttleId = qrData['shuttle'];
+                context
+                    .read<AuthenticationProvider>()
+                    .setScannedShuttleId(shuttleId);
+                await Navigator.pushNamed(
+                    context, ConfirmShuttleScreen.routeName);
+              } catch (e, stackTrace) {
+                log(e.toString(), stackTrace: stackTrace);
+                ScaffoldMessenger.of(context).clearSnackBars();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text("Invalid QR code!"),
+                  ),
+                );
+              } finally {
+                _controller.startScan();
+              }
+            },
+          ),
+          // Scanning animation overlay
+          Positioned.fill(
+            child: AnimatedBuilder(
+              animation: _animationController,
+              builder: (context, child) {
+                final height = MediaQuery.of(context).size.height;
+                return CustomPaint(
+                  painter: _ScannerOverlayPainter(_animation.value, height),
+                );
+              },
             ),
-          );
-        } finally {
-          _controller.startScan();
-        }
-      },
+          ),
+        ],
+      ),
     );
+  }
+}
+
+// Custom painter for scanning line
+class _ScannerOverlayPainter extends CustomPainter {
+  final double progress;
+  final double screenHeight;
+
+  _ScannerOverlayPainter(this.progress, this.screenHeight);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = Colors.blueAccent
+      ..strokeWidth = 2.0
+      ..style = PaintingStyle.stroke;
+
+    final lineY = screenHeight * progress;
+    canvas.drawLine(
+      Offset(0, lineY),
+      Offset(size.width, lineY),
+      paint,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) {
+    return true;
   }
 }

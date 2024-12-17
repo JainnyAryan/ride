@@ -1,11 +1,13 @@
 import 'dart:convert';
 import 'dart:developer';
+import 'dart:io';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:http_exception/http_exception.dart';
 import 'package:ride/helpers/const_values.dart';
 import 'package:ride/helpers/http_helper.dart';
 import 'package:ride/models/driver.dart';
+import 'package:ride/models/history.dart';
 import 'package:ride/models/shuttle.dart';
 import 'package:ride/models/student.dart';
 import 'package:ride/models/userr.dart';
@@ -22,6 +24,7 @@ class AuthenticationProvider with ChangeNotifier {
   bool? _isDriverAssigned;
   String _scannedShuttleId = "";
   Shuttle? _currentShuttleOfDriver;
+  num? _fare;
 
   FirebaseAuth get firebaseAuth {
     return _auth;
@@ -49,6 +52,24 @@ class AuthenticationProvider with ChangeNotifier {
 
   Shuttle? get currentShuttleOfDriver {
     return _currentShuttleOfDriver;
+  }
+
+  num? get fare {
+    return _fare;
+  }
+
+  void setScannedShuttleId(String id) {
+    _scannedShuttleId = id;
+    notifyListeners();
+  }
+
+  void setIsNewUser(bool val) {
+    _isNewUser = val;
+  }
+
+  void updateCurrentUserData(Userr user) {
+    _currentUser = user;
+    notifyListeners();
   }
 
   Future<void> tryLoginWithNumber(String mobileNo) async {
@@ -93,8 +114,10 @@ class AuthenticationProvider with ChangeNotifier {
       );
       // log(response.body);
       HttpHelper.validateResponseStatus(response);
-      _currentUser = Userr.fromJson(jsonDecode(response.body));
+      _currentUser = Userr.fromJson(jsonDecode(response.body)['user']);
+      _fare = jsonDecode(response.body)['fare'];
       if (_currentUser is Student) {
+        _isDriver = false;
         await setStudentWalletFromDB();
       } else {
         _isDriver = true;
@@ -116,6 +139,7 @@ class AuthenticationProvider with ChangeNotifier {
           headers: {'Authorization': 'Bearer $idToken'},
         );
         HttpHelper.validateResponseStatus(walletResponse);
+        log(jsonDecode(walletResponse.body).toString());
         (_currentUser as Student).wallet =
             Wallet.fromJson(jsonDecode(walletResponse.body));
       }
@@ -211,21 +235,87 @@ class AuthenticationProvider with ChangeNotifier {
     }
   }
 
-  void setScannedShuttleId(String id) {
-    _scannedShuttleId = id;
-    notifyListeners();
+  Future<Student?> recognizeFaceOnline(File? image) async {
+    final bytes = await image!.readAsBytes();
+    final base64Image = base64Encode(bytes);
+    try {
+      final idToken = await _auth.currentUser!.getIdToken();
+      final response = await http.post(
+          Uri.parse("${ConstValues.API_URL}/face/recognize"),
+          body: jsonEncode({'frame': base64Image}),
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer $idToken',
+          });
+      log(response.body);
+      HttpHelper.validateResponseStatus(response);
+      final data = jsonDecode(response.body);
+      return data['student'] != null ? Student.fromJson(data['student']) : null;
+    } catch (e, stackTrace) {
+      log(e.toString(), stackTrace: stackTrace);
+      rethrow;
+    }
   }
 
-  void setIsNewUser(bool val) {
-    _isNewUser = val;
+  Future<List<WalletHistoryItem>> getStudentWalletHistory() async {
+    try {
+      final idToken = await _auth.currentUser!.getIdToken();
+      final response = await http.get(
+        Uri.parse(
+            "${ConstValues.API_URL}/history/wallets/${(currentUser as Student).wallet!.id}"),
+        headers: {
+          'Authorization': 'Bearer $idToken',
+        },
+      );
+      HttpHelper.validateResponseStatus(response);
+      final resdata = jsonDecode(response.body);
+      final List historyData = resdata['data'];
+      return historyData
+          .map(
+            (item) => WalletHistoryItem.fromJson(item),
+          )
+          .toList();
+    } catch (e, stackTrace) {
+      log(e.toString(), stackTrace: stackTrace);
+      rethrow;
+    }
   }
 
-  void updateCurrentUserData(Userr user) {
-    _currentUser = user;
-    notifyListeners();
+  Future<List<DriverFinancialHistoryItem>> getDriverFinancialHistory() async {
+    try {
+      final idToken = await _auth.currentUser!.getIdToken();
+      final response = await http.get(
+        Uri.parse(
+            "${ConstValues.API_URL}/history/financial/drivers/${(currentUser as Driver).id}"),
+        headers: {
+          'Authorization': 'Bearer $idToken',
+        },
+      );
+      HttpHelper.validateResponseStatus(response);
+      // log(response.body);
+      final resdata = jsonDecode(response.body);
+      final List historyData = resdata['data'];
+      // final List historyData = [];
+      return historyData
+          .map(
+            (item) => DriverFinancialHistoryItem.fromJson(item),
+          )
+          .toList();
+    } catch (e, stackTrace) {
+      log(e.toString(), stackTrace: stackTrace);
+      rethrow;
+    }
   }
 
   Future<void> signout() async {
+    _authResult = null;
+    _currentUser = null;
+    _verificationId = '';
+    _isNewUser = false;
+    _isDriver = false;
+    _isDriverAssigned = null;
+    _scannedShuttleId = "";
+    _currentShuttleOfDriver = null;
     await _auth.signOut();
     notifyListeners();
   }

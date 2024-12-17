@@ -2,6 +2,7 @@ import 'dart:developer';
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:lottie/lottie.dart';
 import 'package:provider/provider.dart';
 import 'package:ride/providers/authentication_provider.dart';
 
@@ -36,8 +37,8 @@ class _MobileNumberFormState extends State<MobileNumberForm> {
     if (!isValid) return;
 
     _formKey.currentState!.save();
-    _controller.clear();
-    // FocusScope.of(context).unfocus();
+    FocusScope.of(context).unfocus();
+
     try {
       setState(() {
         isLoading = true;
@@ -53,6 +54,7 @@ class _MobileNumberFormState extends State<MobileNumberForm> {
         default:
           msg = "Some error occured!";
       }
+      ScaffoldMessenger.of(context).clearSnackBars();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(msg),
@@ -69,52 +71,58 @@ class _MobileNumberFormState extends State<MobileNumberForm> {
   Widget build(BuildContext context) {
     return Center(
       child: Container(
-        height: MediaQuery.of(context).size.height * 0.3,
         margin: EdgeInsets.all(MediaQuery.of(context).size.width * 0.05),
-        child: Form(
-          key: _formKey,
-          child: Container(
-            margin: const EdgeInsets.all(20),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                TextFormField(
-                  autofocus: true,
-                  validator: (value) {
-                    if (value!.isEmpty || value.length != 10) {
-                      return 'Enter valid mobile number';
-                    }
-                    return null;
-                  },
-                  onSaved: (newValue) {
-                    _userInput = newValue!;
-                  },
-                  controller: _controller,
-                  keyboardType: TextInputType.phone,
-                  decoration: InputDecoration(
-                    prefix: const Text("+91 - "),
-                    label: Text(textInputText),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                ),
-                ElevatedButton.icon(
-                  onPressed: isLoading
-                      ? null
-                      : () async {
-                          await trySubmit(context);
-                        },
-                  icon: const Icon(Icons.lock),
-                  label: Text(buttonText),
-                  style: ButtonStyle(
-                    backgroundColor:
-                        WidgetStatePropertyAll(isLoading ? Colors.grey : null),
-                  ),
-                )
-              ],
+        child: Column(
+          children: [
+            Lottie.asset(
+              'assets/login_lottie.json',
+              height: MediaQuery.of(context).size.height * 0.3,
+              fit: BoxFit.cover,
             ),
-          ),
+            Form(
+              key: _formKey,
+              child: Container(
+                margin: const EdgeInsets.only(top: 50, bottom: 30),
+                child: Column(
+                  children: [
+                    TextFormField(
+                      validator: (value) {
+                        if (value!.isEmpty || value.length != 10) {
+                          return 'Enter valid mobile number';
+                        }
+                        return null;
+                      },
+                      onSaved: (newValue) {
+                        _userInput = newValue!;
+                      },
+                      controller: _controller,
+                      keyboardType: TextInputType.phone,
+                      decoration: InputDecoration(
+                        prefix: const Text("+91 - "),
+                        label: Text(textInputText),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            ElevatedButton.icon(
+              onPressed: isLoading
+                  ? null
+                  : () async {
+                      await trySubmit(context);
+                    },
+              icon: const Icon(Icons.lock),
+              label: Text(buttonText),
+              style: ButtonStyle(
+                backgroundColor:
+                    WidgetStatePropertyAll(isLoading ? Colors.grey : null),
+              ),
+            )
+          ],
         ),
       ),
     );

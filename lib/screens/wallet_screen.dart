@@ -21,14 +21,13 @@ class WalletScreen extends StatefulWidget {
 }
 
 class _WalletScreenState extends State<WalletScreen> {
-  Wallet? _wallet;
+  late Student _student;
   bool isLoading = false;
   final ConfettiController _confettiController = ConfettiController();
 
   @override
   Widget build(BuildContext context) {
-    _wallet =
-        (context.watch<AuthenticationProvider>().currentUser as Student).wallet;
+    _student = context.watch<AuthenticationProvider>().currentUser as Student;
     return Scaffold(
       appBar: AppBar(
         title: const Text("Your Wallet"),
@@ -40,7 +39,7 @@ class _WalletScreenState extends State<WalletScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                if (_wallet != null) ...[
+                if (_student.wallet != null) ...[
                   Column(
                     children: [
                       Row(
@@ -56,7 +55,7 @@ class _WalletScreenState extends State<WalletScreen> {
                             child: AnimatedFlipCounter(
                               curve: Curves.ease,
                               duration: const Duration(milliseconds: 500),
-                              value: _wallet!.amount,
+                              value: _student.wallet!.amount,
                               fractionDigits: 2,
                               textStyle: const TextStyle(fontSize: 40),
                             ),
@@ -97,7 +96,7 @@ class _WalletScreenState extends State<WalletScreen> {
                     },
                   ),
                 ],
-                if (_wallet == null)
+                if (_student.wallet == null)
                   Center(
                     child: ElevatedButton(
                       onPressed: isLoading
@@ -108,7 +107,8 @@ class _WalletScreenState extends State<WalletScreen> {
                               });
                               await context
                                   .read<StudentProvider>()
-                                  .createWallet(context.read<AuthenticationProvider>());
+                                  .createWallet(
+                                      context.read<AuthenticationProvider>());
                               setState(() {
                                 isLoading = false;
                               });

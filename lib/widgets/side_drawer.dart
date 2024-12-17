@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:ride/providers/authentication_provider.dart';
 import 'package:ride/providers/server_interaction_provider.dart';
 import 'package:ride/screens/settings_screen.dart';
+import 'package:ride/screens/wallet_history_screen.dart';
 import 'package:ride/screens/wallet_screen.dart';
 import 'package:ride/widgets/side_drawer_tile.dart';
 
@@ -12,7 +13,9 @@ class SideDrawer extends StatelessWidget {
   List<SideDrawerTile> getDriverSideDrawerTiles(BuildContext context) {
     return [
       SideDrawerTile(
-        onTap: () {},
+        onTap: () {
+          Navigator.pushNamed(context, WalletHistoryScreen.routeName);
+        },
         title: "Fare History",
         leading: const Icon(Icons.currency_rupee),
       ),
@@ -22,11 +25,6 @@ class SideDrawer extends StatelessWidget {
         },
         title: "Settings",
         leading: const Icon(Icons.settings),
-      ),
-      SideDrawerTile(
-        onTap: () {},
-        title: "About",
-        leading: const Icon(Icons.info_outline_rounded),
       ),
       SideDrawerTile(
         onTap: () async {
@@ -53,8 +51,10 @@ class SideDrawer extends StatelessWidget {
         leading: const Icon(Icons.wallet),
       ),
       SideDrawerTile(
-        onTap: () {},
-        title: "Payment History",
+        onTap: () {
+          Navigator.pushNamed(context, WalletHistoryScreen.routeName);
+        },
+        title: "Wallet History",
         leading: const Icon(Icons.currency_rupee),
       ),
       SideDrawerTile(
@@ -63,11 +63,6 @@ class SideDrawer extends StatelessWidget {
         },
         title: "Settings",
         leading: const Icon(Icons.settings),
-      ),
-      SideDrawerTile(
-        onTap: () {},
-        title: "About",
-        leading: const Icon(Icons.info_outline_rounded),
       ),
       SideDrawerTile(
         onTap: () async {

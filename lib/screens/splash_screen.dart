@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:http_exception/http_exception.dart';
+import 'package:lottie/lottie.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 import 'package:ride/providers/authentication_provider.dart';
@@ -112,8 +113,7 @@ class _SplashScreenState extends State<SplashScreen>
                   return _locationServiceDisabledScreen();
                 }
 
-             
-                      return HomeScreen();
+                return HomeScreen();
               },
             );
           },
@@ -129,7 +129,7 @@ class _SplashScreenState extends State<SplashScreen>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Image.asset("assets/images/taxi.png"),
+            Lottie.asset("assets/loading_bus.json"),
           ],
         ),
       ),
@@ -142,7 +142,7 @@ class _SplashScreenState extends State<SplashScreen>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Image.asset("assets/images/taxi.png"),
+            Image.asset("assets/images/bus.png"),
             const Text("Please enable location services to continue."),
             ElevatedButton(
               onPressed: () async {
@@ -165,7 +165,7 @@ class _SplashScreenState extends State<SplashScreen>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Image.asset("assets/images/taxi.png"),
+            Image.asset("assets/images/bus.png"),
             Text(
               _authenticationProvider.isDriver
                   ? "Always location permission needed"

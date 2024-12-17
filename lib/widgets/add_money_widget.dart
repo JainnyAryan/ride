@@ -15,22 +15,26 @@ class AddMoneyWidget extends StatefulWidget {
 }
 
 class _AddMoneyWidgetState extends State<AddMoneyWidget> {
-  int _amount = 0;
+  num _amount = 0;
   int _trips = 0;
   bool _isLoading = false;
 
   final List<int> _values = List.generate(46, (index) => index + 5);
 
   late WheelPickerController _wheelPickerController;
+  late AuthenticationProvider _authenticationProvider;
 
   Future<void> addMoney() async {
     setState(() {
       _isLoading = true;
     });
     try {
-      await context
-          .read<StudentProvider>()
-          .addMoneyToWallet(_trips, context.read<AuthenticationProvider>());
+      await context.read<StudentProvider>().updateWalletAmount(
+            (_authenticationProvider.currentUser as Student),
+            _trips,
+            true,
+            _authenticationProvider,
+          );
       widget.onAddMoneySuccess();
       ScaffoldMessenger.of(context).clearSnackBars();
       ScaffoldMessenger.of(context).showSnackBar(
@@ -56,6 +60,7 @@ class _AddMoneyWidgetState extends State<AddMoneyWidget> {
         ),
       );
     } catch (e) {
+      ScaffoldMessenger.of(context).clearSnackBars();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(e.toString()),
@@ -73,9 +78,10 @@ class _AddMoneyWidgetState extends State<AddMoneyWidget> {
   void initState() {
     super.initState();
     _wheelPickerController = WheelPickerController(itemCount: _values.length);
+    _authenticationProvider = context.read<AuthenticationProvider>();
     _trips = _values[_wheelPickerController.initialIndex];
     ;
-    _amount = 20 * _trips;
+    _amount = _authenticationProvider.fare! * _trips;
   }
 
   @override
@@ -84,7 +90,7 @@ class _AddMoneyWidgetState extends State<AddMoneyWidget> {
       absorbing: _isLoading,
       child: Card(
         child: Padding(
-          padding: const EdgeInsets.all(20.0),
+          padding: const EdgeInsets.all(20),
           child: Column(
             children: [
               Row(
@@ -97,7 +103,7 @@ class _AddMoneyWidgetState extends State<AddMoneyWidget> {
                         height: 20,
                       ),
                       Text(
-                        "20",
+                        _authenticationProvider.fare!.toString(),
                         style: Theme.of(context).textTheme.titleMedium,
                       ),
                     ],
@@ -115,7 +121,7 @@ class _AddMoneyWidgetState extends State<AddMoneyWidget> {
                           onIndexChanged: (index) {
                             _trips = _values[index];
                             setState(() {
-                              _amount = 20 * _trips;
+                              _amount = _authenticationProvider.fare! * _trips;
                             });
                           },
                           builder: (context, index) {

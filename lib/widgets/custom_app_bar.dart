@@ -40,7 +40,7 @@ class _CustomAppBarState extends State<CustomAppBar> {
     String titleText = _authenticationProvider.isDriver
         ? (_authenticationProvider.currentShuttleOfDriver?.vehicleNumber ??
             "Offline")
-        : "Hi User";
+        : "Hi ${_authenticationProvider.currentUser.getAbbreviatedName()}";
     return SafeArea(
       child: Card(
         elevation: 6,
@@ -81,10 +81,10 @@ class _CustomAppBarState extends State<CustomAppBar> {
   }
 
   Widget _buildDriverAppBarTrailing(bool? isAssigned, BuildContext context) {
+    bool isLoading = false;
     return GestureDetector(
       onTap: isAssigned == true
           ? () async {
-              bool isLoading = false;
               showModalBottomSheet(
                 isScrollControlled: true,
                 useSafeArea: false,
@@ -94,71 +94,101 @@ class _CustomAppBarState extends State<CustomAppBar> {
                 elevation: 0,
                 context: context,
                 builder: (context) {
-                  return Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 20, vertical: 70),
-                    decoration: const BoxDecoration(color: Colors.transparent),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        SliderButton(
-                          action: () async {
-                            try {
-                              setState(() {
-                                isLoading = true;
-                              });
-                              await _authenticationProvider
-                                  .removeCurrentDriverFromShuttle();
-                              Navigator.pop(context);
-                              Navigator.pushReplacementNamed(
-                                  context, HomeScreen.routeName);
-                              return true;
-                            } catch (e, stackTrace) {
-                              log(e.toString(), stackTrace: stackTrace);
-                              return false;
-                            } finally {
-                              setState(() {
-                                isLoading = false;
-                              });
-                            }
-                          },
-                          radius: 200,
-                          height: 80,
-                          // width: ,
-                          baseColor: Colors.red,
-                          label: const Text(
-                            "Swipe to go offline",
-                            style: TextStyle(color: Colors.red),
-                          ),
-                          alignLabel: Alignment.center,
-                          vibrationFlag: true,
-                          buttonSize: 60,
-                          icon: !isLoading
-                              ? const Icon(
-                                  Icons.chevron_right,
-                                  color: Colors.red,
-                                  size: 30,
+                  return Scaffold(
+                    backgroundColor: Colors.transparent,
+                    body: StatefulBuilder(
+                      builder: (context, setState) => Center(
+                        child: AnimatedSwitcher(
+                          duration: Durations.medium1,
+                          child: isLoading
+                              ? const CircleAvatar(
+                                  radius: 40,
+                                  backgroundColor: Color.fromARGB(169, 0, 0, 0),
+                                  child: CupertinoActivityIndicator(
+                                    radius: 20,
+                                    color: Colors.white,
+                                  ),
                                 )
-                              : const CircularProgressIndicator(
-                                  strokeWidth: 1,
-                                  color: Colors.grey,
+                              : Container(
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 70),
+                                  decoration: const BoxDecoration(
+                                      color: Colors.transparent),
+                                  child: Column(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.center,
+                                    children: [
+                                      SliderButton(
+                                        action: () async {
+                                          setState(() {
+                                            isLoading = true;
+                                          });
+                                          await Future.delayed(Durations.long4);
+                                          try {
+                                            await _authenticationProvider
+                                                .removeCurrentDriverFromShuttle();
+
+                                            Navigator.pop(context);
+                                            Navigator.pushReplacementNamed(
+                                                context, HomeScreen.routeName);
+                                            return true;
+                                          } catch (e, stackTrace) {
+                                            log(e.toString(),
+                                                stackTrace: stackTrace);
+                                            ScaffoldMessenger.of(context)
+                                                .clearSnackBars();
+                                            ScaffoldMessenger.of(context)
+                                                .showSnackBar(
+                                              const SnackBar(
+                                                backgroundColor: Colors.red,
+                                                content:
+                                                    Text("Some error occured!"),
+                                              ),
+                                            );
+                                            return false;
+                                          } finally {
+                                            setState(() {
+                                              isLoading = false;
+                                            });
+                                          }
+                                        },
+                                        radius: 200,
+                                        height: 80,
+                                        baseColor: Colors.red,
+                                        label: const Text(
+                                          "Swipe to go offline",
+                                          style: TextStyle(color: Colors.red),
+                                        ),
+                                        alignLabel: Alignment.center,
+                                        vibrationFlag: true,
+                                        buttonSize: 60,
+                                        icon: const Icon(
+                                          Icons.chevron_right,
+                                          color: Colors.red,
+                                          size: 30,
+                                        ),
+                                      ),
+                                      GestureDetector(
+                                        onTap: () {
+                                          Navigator.pop(context);
+                                        },
+                                        child: const CircleAvatar(
+                                          radius: 30,
+                                          backgroundColor:
+                                              Color.fromARGB(169, 0, 0, 0),
+                                          child: Icon(
+                                            Icons.close,
+                                            size: 30,
+                                          ),
+                                        ),
+                                      )
+                                    ],
+                                  ),
                                 ),
                         ),
-                        GestureDetector(
-                          onTap: () {
-                            Navigator.pop(context);
-                          },
-                          child: const CircleAvatar(
-                            radius: 30,
-                            backgroundColor: Color.fromARGB(169, 0, 0, 0),
-                            child: Icon(
-                              Icons.close,
-                              size: 30,
-                            ),
-                          ),
-                        )
-                      ],
+                      ),
                     ),
                   );
                 },
